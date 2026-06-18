@@ -260,7 +260,9 @@ function setupEventListeners() {
   const settingsModal = document.getElementById('modal-settings');
   document.getElementById('btn-open-settings').addEventListener('click', () => {
     // Fill settings modal
-    document.getElementById('cfg-gemini-key').value = clientState.settings.geminiApiKey || localStorage.getItem('gemini_api_key') || '';
+    document.getElementById('cfg-api-provider').value = clientState.settings.apiProvider || 'gemini';
+    document.getElementById('cfg-api-model').value = clientState.settings.apiModel || '';
+    document.getElementById('cfg-api-key').value = clientState.settings.apiKey || clientState.settings.geminiApiKey || localStorage.getItem('gemini_api_key') || '';
     document.getElementById('cfg-rss-url').value = clientState.settings.rssFeedUrl || '';
     document.getElementById('cfg-ingest-dir').value = clientState.settings.ingestDirectory || '';
     document.getElementById('cfg-ingest-time').value = clientState.settings.ingestTime || '05:00';
@@ -275,13 +277,19 @@ function setupEventListeners() {
   });
 
   document.getElementById('btn-save-settings').addEventListener('click', async () => {
-    const key = document.getElementById('cfg-gemini-key').value.trim();
-    if (key) {
+    const provider = document.getElementById('cfg-api-provider').value;
+    const model = document.getElementById('cfg-api-model').value.trim();
+    const key = document.getElementById('cfg-api-key').value.trim();
+    
+    if (key && provider === 'gemini') {
       localStorage.setItem('gemini_api_key', key);
     }
     
     const body = {
-      geminiApiKey: key,
+      apiProvider: provider,
+      apiModel: model,
+      apiKey: key,
+      geminiApiKey: key, // maintain backward compatibility
       rssFeedUrl: document.getElementById('cfg-rss-url').value.trim(),
       ingestDirectory: document.getElementById('cfg-ingest-dir').value.trim(),
       ingestTime: document.getElementById('cfg-ingest-time').value,
