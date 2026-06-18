@@ -1,0 +1,23 @@
+{
+  "name": "ai-agent-team-orchestrator",
+  "version": "1.0.0",
+  "description": "Automated AI Agent Team Workspace for text extraction, summarization, copywriting, video rendering, and YouTube publishing.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0",
+    "mammoth": "^1.8.0",
+    "node-cron": "^3.0.3",
+    "pdf-parse": "^1.1.1"
+  }
+}
