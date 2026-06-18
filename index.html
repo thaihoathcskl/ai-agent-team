@@ -341,10 +341,25 @@
       </div>
       <div class="modal-body">
         
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cfg-api-provider">Nhà cung cấp LLM API</label>
+            <select id="cfg-api-provider">
+              <option value="gemini">Google Gemini</option>
+              <option value="groq">Groq Cloud</option>
+              <option value="openrouter">OpenRouter AI</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cfg-api-model">Mô hình AI (Tên Model)</label>
+            <input type="text" id="cfg-api-model" placeholder="E.g. gemini-2.5-flash, llama-3.3-70b-versatile, ...">
+          </div>
+        </div>
+
         <div class="form-group">
-          <label for="cfg-gemini-key">Khóa API Gemini (Để các Agent tự động viết bài)</label>
-          <input type="password" id="cfg-gemini-key" placeholder="Nhập API Key (e.g. AIzaSy...)">
-          <p class="helper-text">Lưu trực tiếp trong localStorage của trình duyệt, cực kỳ an toàn.</p>
+          <label for="cfg-api-key">Khóa API Key</label>
+          <input type="password" id="cfg-api-key" placeholder="Nhập API Key của nhà cung cấp đã chọn...">
+          <p class="helper-text">Khóa API được lưu cấu hình an toàn trên máy chủ. Chạy thử nghiệm offline nếu bỏ trống.</p>
         </div>
 
         <div class="form-group">
