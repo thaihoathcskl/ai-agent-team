@@ -52,10 +52,8 @@ async function pollStatus() {
     updateAgentNodesUI();
     updateSchedulerStatusUI();
     
-    // Auto-update raw text if we just ran ingest and got new text
-    if (clientState.dataMeta.hasRawText && !document.getElementById('txt-raw-content').value) {
-      fetchData();
-    }
+    // Auto-update data to keep UI in sync automatically
+    fetchData();
   } catch (err) {
     console.error('Error polling status:', err);
   }
