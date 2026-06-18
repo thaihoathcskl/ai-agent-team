@@ -146,8 +146,21 @@ function setupCronJobs() {
 // Core Workflow Execution
 // ----------------------------------------------------
 async function runPipelineStep1To4(forcedSource = null) {
-  addLog("🚀 Bắt đầu chạy Nhóm Agent (Bước 1 - 4)...");
+  addLog("🚀 Khởi chạy Quy trình Nhóm Agent (Bước 1 - 4)...");
   
+  // Reset all agent statuses to idle to restart visualization
+  state.agentStatus = {
+    ingester: 'idle',
+    summarizer: 'idle',
+    writer: 'idle',
+    director: 'idle',
+    publisher: 'idle'
+  };
+  state.data.publishStatus = 'idle';
+  state.data.publishUrl = '';
+  saveState();
+  await new Promise(r => setTimeout(r, 800));
+
   // Instance agents
   const ingestAgent = new IngestionAgent(addLog);
   const summarizerAgent = new SummarizerAgent(state.settings.geminiApiKey, addLog);
@@ -157,6 +170,7 @@ async function runPipelineStep1To4(forcedSource = null) {
   // Agent 1: Ingest
   state.agentStatus.ingester = 'active';
   saveState();
+  await new Promise(r => setTimeout(r, 2000)); // Delay for visualization
   
   let sourceText = "";
   let sourceMeta = { type: 'direct', name: 'Nhập tay' };
@@ -195,30 +209,40 @@ async function runPipelineStep1To4(forcedSource = null) {
   state.data.sourceMeta = sourceMeta;
   state.agentStatus.ingester = 'success';
   saveState();
+  await new Promise(r => setTimeout(r, 1000)); // Delay for signal flow
 
   // Agent 2: Summarize
   state.agentStatus.summarizer = 'active';
   saveState();
+  await new Promise(r => setTimeout(r, 2000)); // Delay for visualization
+  
   const summary = await summarizerAgent.summarize(sourceText);
   state.data.summary = summary;
   state.agentStatus.summarizer = 'success';
   saveState();
+  await new Promise(r => setTimeout(r, 1000)); // Delay for signal flow
 
   // Agent 3: Write Content
   state.agentStatus.writer = 'active';
   saveState();
+  await new Promise(r => setTimeout(r, 2000)); // Delay for visualization
+  
   const scriptText = await copywriterAgent.writeContent(summary);
   state.data.script = scriptText;
   state.agentStatus.writer = 'success';
   saveState();
+  await new Promise(r => setTimeout(r, 1000)); // Delay for signal flow
 
   // Agent 4: Design Storyboard
   state.agentStatus.director = 'active';
   saveState();
+  await new Promise(r => setTimeout(r, 2000)); // Delay for visualization
+  
   const storyboard = videoAgent.parseStoryboard(scriptText);
   state.data.storyboard = storyboard;
   state.agentStatus.director = 'success';
   saveState();
+  await new Promise(r => setTimeout(r, 1000)); // Delay for signal flow
 
   // Generate standard YouTube meta
   const pubAgent = new YouTubePublisherAgent(addLog);
@@ -228,6 +252,7 @@ async function runPipelineStep1To4(forcedSource = null) {
   addLog("✅ Đã hoàn thành quy trình tạo Kịch bản & phân cảnh Storyboard!");
   saveState();
 }
+
 
 async function runPipelineStep5() {
   addLog("🚀 Bắt đầu kích hoạt Agent 5: YouTube Publisher...");
