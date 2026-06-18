@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentTeam Studio - Hệ Thống AI Agent Tự Động Hóa</title>
+  <!-- Google Fonts: Outfit for titles, Inter for body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="cyber-grid"></div>
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">🤖</div>
+        <div class="logo-text">
+          <h1>AgentTeam Studio</h1>
+          <p>Hệ thống Điều phối & Tự động hóa Nhóm AI Agent</p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <div class="status-indicator">
+          <span class="pulse-green"></span>
+          <span id="scheduler-status-text">Lên lịch: Tắt</span>
+        </div>
+        <button id="btn-open-settings" class="btn btn-secondary btn-icon-text">
+          <span class="material-icons-round">settings</span> Cài đặt Hệ thống
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <div class="workspace-grid">
+      
+      <!-- Left Column: Agent Flow Graph & Controls -->
+      <div class="left-column">
+        
+        <!-- Flow Graph Card -->
+        <div class="glass-card agent-flow-card">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-icons-round">account_tree</span> Sơ đồ Vận hành Team</h2>
+            <div class="flow-actions">
+              <button id="btn-run-all" class="btn btn-primary btn-sm"><span class="material-icons-round">play_arrow</span> Chạy Quy Trình</button>
+            </div>
+          </div>
+          
+          <div class="flow-graph">
+            <div class="agent-node" id="node-ingester" data-agent="ingester">
+              <div class="node-icon icon-ingest">📥</div>
+              <div class="node-details">
+                <h3>Agent 1: Ingest</h3>
+                <span class="node-status">Đang chờ...</span>
+              </div>
+            </div>
+            
+            <div class="flow-line"><div class="flow-pulse"></div></div>
+
+            <div class="agent-node" id="node-summarizer" data-agent="summarizer">
+              <div class="node-icon icon-summary">📝</div>
+              <div class="node-details">
+                <h3>Agent 2: Summarize</h3>
+                <span class="node-status">Đang chờ...</span>
+              </div>
+            </div>
+
+            <div class="flow-line"><div class="flow-pulse"></div></div>
+
+            <div class="agent-node" id="node-writer" data-agent="writer">
+              <div class="node-icon icon-write">✍️</div>
+              <div class="node-details">
+                <h3>Agent 3: Copywriter</h3>
+                <span class="node-status">Đang chờ...</span>
+              </div>
+            </div>
+
+            <div class="flow-line"><div class="flow-pulse"></div></div>
+
+            <div class="agent-node" id="node-director" data-agent="director">
+              <div class="node-icon icon-video">🎬</div>
+              <div class="node-details">
+                <h3>Agent 4: Video Director</h3>
+                <span class="node-status">Đang chờ...</span>
+              </div>
+            </div>
+
+            <div class="flow-line"><div class="flow-pulse"></div></div>
+
+            <div class="agent-node" id="node-publisher" data-agent="publisher">
+              <div class="node-icon icon-publish">🚀</div>
+              <div class="node-details">
+                <h3>Agent 5: Publisher</h3>
+                <span class="node-status">Đang chờ...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal Logs Card -->
+        <div class="glass-card terminal-card">
+          <div class="card-header">
+            <h2 class="card-title"><span class="material-icons-round">terminal</span> Nhật ký Hoạt động (Logs)</h2>
+            <button id="btn-clear-logs" class="btn btn-icon-only text-danger" title="Xóa logs">
+              <span class="material-icons-round">delete_sweep</span>
+            </button>
+          </div>
+          <div class="terminal-body" id="log-terminal">
+            <div class="log-line text-muted">[Hệ thống] Đang tải nhật ký từ server...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Workspaces -->
+      <div class="right-column glass-card workspace-panel">
+        
+        <!-- Navigation Tabs -->
+        <div class="workspace-tabs">
+          <button class="tab-btn active" data-tab="tab-ingest"><span class="material-icons-round">cloud_download</span> 1. Nguồn Dữ Liệu</button>
+          <button class="tab-btn" data-tab="tab-summary"><span class="material-icons-round">article</span> 2. Bản Tóm Tắt</button>
+          <button class="tab-btn" data-tab="tab-script"><span class="material-icons-round">description</span> 3. Kịch Bản</button>
+          <button class="tab-btn" data-tab="tab-video"><span class="material-icons-round">movie</span> 4. Dựng Video</button>
+          <button class="tab-btn" data-tab="tab-publish"><span class="material-icons-round">publish</span> 5. Đăng YouTube</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="tab-contents">
+          
+          <!-- Tab 1: Ingest -->
+          <div class="tab-pane active" id="tab-ingest">
+            <div class="pane-header">
+              <h2>Agent Ingestion Hub</h2>
+              <p>Thu thập dữ liệu từ tập tin cục bộ hoặc quét đường dẫn website.</p>
+            </div>
+            
+            <div class="input-selection-grid">
+              <div class="input-option-box">
+                <h3>Đọc Web URL / RSS Feed</h3>
+                <div class="form-group row-group">
+                  <input type="text" id="input-url" placeholder="Nhập địa chỉ Web (e.g. https://vnexpress.net/...)" value="https://vnexpress.net/rss/tin-moi-nhat.rss">
+                  <button id="btn-run-web" class="btn btn-secondary"><span class="material-icons-round">search</span> Đọc Tin</button>
+                </div>
+                <p class="helper-text">Hệ thống sẽ cào cấu trúc văn bản hoặc tự động lấy bài viết mới nhất từ RSS.</p>
+              </div>
+
+              <div class="input-option-box">
+                <h3>Đọc Tệp Tin (PDF, DOCX, TXT)</h3>
+                <div class="drag-drop-area" id="drag-drop-zone">
+                  <span class="material-icons-round upload-icon">upload_file</span>
+                  <p>Kéo thả file PDF hoặc Word (.docx) vào đây</p>
+                  <span class="or-text">hoặc</span>
+                  <label for="file-upload" class="btn btn-secondary btn-sm">Chọn File</label>
+                  <input type="file" id="file-upload" accept=".pdf,.docx,.txt" style="display: none;">
+                </div>
+                <div id="file-info" class="file-info-bar" style="display:none;">
+                  <span class="material-icons-round">insert_drive_file</span>
+                  <span id="file-name-display">file.pdf</span>
+                  <button id="btn-cancel-file" class="btn-cancel">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="extracted-text-area">
+              <h3>Dữ liệu thô trích xuất được:</h3>
+              <textarea id="txt-raw-content" readonly placeholder="Nội dung văn bản được giải nén sẽ xuất hiện ở đây..."></textarea>
+            </div>
+          </div>
+
+          <!-- Tab 2: Summary -->
+          <div class="tab-pane" id="tab-summary">
+            <div class="pane-header">
+              <h2>Synthesis Output</h2>
+              <p>Bản tóm tắt phân tích thông tin từ dữ liệu đầu vào.</p>
+            </div>
+            <div class="editor-container">
+              <textarea id="txt-summary" placeholder="Đang chờ Agent tóm tắt thông tin..."></textarea>
+            </div>
+            <div class="pane-actions">
+              <button id="btn-save-summary" class="btn btn-success"><span class="material-icons-round">save</span> Lưu Chỉnh Sửa</button>
+            </div>
+          </div>
+
+          <!-- Tab 3: Script -->
+          <div class="tab-pane" id="tab-script">
+            <div class="pane-header">
+              <h2>YouTube & Content Copywriting</h2>
+              <p>Kịch bản dẫn chương trình chi tiết phân theo từng phân cảnh cùng mô tả bài đăng.</p>
+            </div>
+            <div class="editor-container">
+              <textarea id="txt-script" class="font-fira" placeholder="Đang chờ Copywriter biên soạn kịch bản..."></textarea>
+            </div>
+            <div class="pane-actions">
+              <button id="btn-save-script" class="btn btn-success"><span class="material-icons-round">save</span> Lưu Chỉnh Sửa</button>
+            </div>
+          </div>
+
+          <!-- Tab 4: Video Builder -->
+          <div class="tab-pane" id="tab-video">
+            <div class="pane-header">
+              <h2>Trình mô phỏng Dựng & Phát Video</h2>
+              <p>Chuyển đổi phân cảnh Storyboard thành slide trình chiếu kèm giọng đọc (TTS) và nhạc nền.</p>
+            </div>
+
+            <div class="video-builder-layout">
+              <!-- Canvas Video Player -->
+              <div class="video-player-container">
+                <canvas id="video-canvas" width="640" height="360"></canvas>
+                <div class="player-controls">
+                  <button id="btn-play-video" class="btn btn-primary btn-round" disabled>
+                    <span class="material-icons-round">play_arrow</span>
+                  </button>
+                  <div class="progress-bar-wrapper">
+                    <div class="player-progress" id="player-progress-bar"></div>
+                  </div>
+                  <div class="time-display" id="player-time">00:00 / 00:00</div>
+                </div>
+                <div class="subtitle-overlay" id="subtitle-box">Đang chờ chạy video...</div>
+              </div>
+
+              <!-- Storyboard Scenes -->
+              <div class="storyboard-panel">
+                <h3>Bảng Phân Cảnh (Storyboard)</h3>
+                <div class="storyboard-list" id="storyboard-list-container">
+                  <div class="storyboard-empty-state">
+                    Chưa có storyboard. Hãy chạy quy trình để tạo phân cảnh video tự động.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: Publish -->
+          <div class="tab-pane" id="tab-publish">
+            <div class="pane-header">
+              <h2>YouTube Publisher Settings & Metadata</h2>
+              <p>Chuẩn bị tiêu đề, mô tả và đăng tải video lên kênh.</p>
+            </div>
+
+            <div class="publisher-layout">
+              <!-- Left: Metadata Editors -->
+              <div class="meta-column">
+                <div class="form-group">
+                  <label for="pub-title">Tiêu Đề Video (Tối đa 100 từ)</label>
+                  <input type="text" id="pub-title" placeholder="Nhập tiêu đề hấp dẫn...">
+                </div>
+                <div class="form-group">
+                  <label for="pub-description">Mô Tả Video (Description)</label>
+                  <textarea id="pub-description" rows="6" placeholder="Mô tả chuẩn SEO..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="pub-tags">Thẻ Tìm Kiếm (Tags)</label>
+                  <input type="text" id="pub-tags" placeholder="E.g. ai, automation, video">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="pub-privacy">Quyền riêng tư</label>
+                    <select id="pub-privacy">
+                      <option value="unlisted">Không công khai (Unlisted)</option>
+                      <option value="private">Riêng tư (Private)</option>
+                      <option value="public">Công khai (Public)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="pub-category">Danh mục</label>
+                    <select id="pub-category">
+                      <option value="27">Giáo dục (Education)</option>
+                      <option value="22">Blog & Mọi người (People & Blogs)</option>
+                      <option value="28">Khoa học & Công nghệ (Sci & Tech)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Thumbnail Generator & Upload -->
+              <div class="upload-column">
+                <h3>Thiết Kế Ảnh Bìa (Thumbnail Generator)</h3>
+                <div class="thumbnail-preview-container">
+                  <canvas id="thumbnail-canvas" width="320" height="180"></canvas>
+                  <div class="thumbnail-tools">
+                    <div class="form-group">
+                      <label>Dòng chữ ảnh bìa:</label>
+                      <input type="text" id="thumb-text" value="BÍ QUYẾT HỌC TẬP">
+                    </div>
+                    <div class="form-group">
+                      <label>Chủ đề màu nền:</label>
+                      <select id="thumb-bg-style">
+                        <option value="neon">Neon Cyber (Tím - Cyan)</option>
+                        <option value="sunset">Sunset Glow (Cam - Đỏ)</option>
+                        <option value="forest">Emerald Leaf (Xanh lá - Lam)</option>
+                        <option value="space">Deep Space (Đen - Xanh dương)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="upload-trigger-area">
+                  <button id="btn-publish-youtube" class="btn btn-danger btn-block btn-lg">
+                    <span class="material-icons-round">upload</span> TẢI LÊN KÊNH YOUTUBE
+                  </button>
+                  
+                  <!-- Upload Steps Status -->
+                  <div class="upload-progress-card" id="upload-status-card" style="display:none;">
+                    <div class="upload-steps">
+                      <div class="upload-step" id="step-auth">
+                        <span class="step-icon">1</span> Xác thực tài khoản Google...
+                      </div>
+                      <div class="upload-step" id="step-meta">
+                        <span class="step-icon">2</span> Đang đẩy metadata và video...
+                      </div>
+                      <div class="upload-step" id="step-processing">
+                        <span class="step-icon">3</span> Đang chờ YouTube xử lý SD/HD...
+                      </div>
+                    </div>
+                    <div class="success-url-box" id="success-url-box" style="display:none;">
+                      <p>🎉 Video của bạn đã sẵn sàng!</p>
+                      <a href="#" id="publish-link" target="_blank">Xem video trên YouTube</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Dialog (Modal) -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Cài đặt Hệ thống AI Agent</h2>
+        <button id="btn-close-settings" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label for="cfg-gemini-key">Khóa API Gemini (Để các Agent tự động viết bài)</label>
+          <input type="password" id="cfg-gemini-key" placeholder="Nhập API Key (e.g. AIzaSy...)">
+          <p class="helper-text">Lưu trực tiếp trong localStorage của trình duyệt, cực kỳ an toàn.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-rss-url">Đường dẫn Website/RSS mặc định để quét tin</label>
+          <input type="text" id="cfg-rss-url" placeholder="RSS Feed URL" value="https://vnexpress.net/rss/tin-moi-nhat.rss">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-ingest-dir">Thư mục chờ nạp file cục bộ (PDF, Word)</label>
+          <input type="text" id="cfg-ingest-dir" placeholder="C:/Users/.../incoming">
+          <p class="helper-text">Khi có file trong thư mục này, Agent 1 sẽ ưu tiên đọc file thay vì cào web.</p>
+        </div>
+
+        <div class="scheduler-config-box">
+          <h3>Lên Lịch Chạy Tự Động Hàng Ngày</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-ingest-time">Giờ Cào Tin & Soạn Kịch Bản (Agent 1-4)</label>
+              <input type="time" id="cfg-ingest-time" value="05:00">
+            </div>
+            <div class="form-group">
+              <label for="cfg-publish-time">Giờ Dựng Video & Đăng YouTube (Agent 5)</label>
+              <input type="time" id="cfg-publish-time" value="06:00">
+            </div>
+          </div>
+
+          <div class="form-group row-group inline-checkbox">
+            <input type="checkbox" id="cfg-scheduler-enable">
+            <label for="cfg-scheduler-enable"><strong>Kích hoạt Cron Job chạy ngầm tự động</strong></label>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="btn btn-primary">Lưu Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingestion Library CDNs for local client-side processing if uploading directly -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
