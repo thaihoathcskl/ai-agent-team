@@ -23,6 +23,9 @@ app.use(express.static(path.join(__dirname)));
 const STATE_FILE = path.join(__dirname, 'state-db.json');
 let state = {
   settings: {
+    apiProvider: 'gemini',
+    apiKey: process.env.GEMINI_API_KEY || '',
+    apiModel: '',
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     rssFeedUrl: 'https://vnexpress.net/rss/tin-moi-nhat.rss',
     ingestDirectory: path.join(__dirname, 'incoming'),
@@ -163,8 +166,12 @@ async function runPipelineStep1To4(forcedSource = null) {
 
   // Instance agents
   const ingestAgent = new IngestionAgent(addLog);
-  const summarizerAgent = new SummarizerAgent(state.settings.geminiApiKey, addLog);
-  const copywriterAgent = new CopywriterAgent(state.settings.geminiApiKey, addLog);
+  const provider = state.settings.apiProvider || 'gemini';
+  const apiKey = state.settings.apiKey || state.settings.geminiApiKey || '';
+  const modelName = state.settings.apiModel || '';
+  
+  const summarizerAgent = new SummarizerAgent(provider, apiKey, modelName, addLog);
+  const copywriterAgent = new CopywriterAgent(provider, apiKey, modelName, addLog);
   const videoAgent = new VideoDirectorAgent(addLog);
 
   // Agent 1: Ingest
@@ -308,9 +315,18 @@ app.get('/api/data', (req, res) => {
 });
 
 app.post('/api/config', (req, res) => {
-  const { geminiApiKey, rssFeedUrl, ingestTime, publishTime, isAutoScheduleActive } = req.body;
+  const { apiProvider, apiKey, apiModel, geminiApiKey, rssFeedUrl, ingestTime, publishTime, isAutoScheduleActive } = req.body;
   
-  if (geminiApiKey !== undefined) state.settings.geminiApiKey = geminiApiKey;
+  if (apiProvider !== undefined) state.settings.apiProvider = apiProvider;
+  if (apiKey !== undefined) state.settings.apiKey = apiKey;
+  if (apiModel !== undefined) state.settings.apiModel = apiModel;
+  if (geminiApiKey !== undefined) {
+    state.settings.geminiApiKey = geminiApiKey;
+    if (!state.settings.apiKey) {
+      state.settings.apiKey = geminiApiKey;
+      state.settings.apiProvider = 'gemini';
+    }
+  }
   if (rssFeedUrl !== undefined) state.settings.rssFeedUrl = rssFeedUrl;
   if (ingestTime !== undefined) state.settings.ingestTime = ingestTime;
   if (publishTime !== undefined) state.settings.publishTime = publishTime;
