@@ -1,0 +1,5 @@
+node_modules/
+.env
+state-db.json
+incoming/processed/
+.DS_Store
