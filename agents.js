@@ -148,7 +148,7 @@ async function callLLM(provider, apiKey, modelName, prompt, logCallback = consol
     throw new Error("Không nhận được câu trả lời từ OpenRouter API.");
   } else if (prov === 'ollama') {
     const url = 'http://localhost:11434/v1/chat/completions';
-    const model = modelName || 'gemma';
+    const model = modelName || 'qwen2.5:1.5b';
     logCallback(`[LLM Request] Gọi Local Ollama với model: ${model}`);
     try {
       const response = await axios.post(url, {
