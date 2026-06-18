@@ -487,66 +487,189 @@ function initVideoCanvas() {
 function jumpToScene(index) {
   if (!clientState.currentData || !clientState.currentData.storyboard) return;
   currentSceneIndex = index;
-  drawScene(clientState.currentData.storyboard[index]);
+  drawScene(clientState.currentData.storyboard[index], 0, 8000);
   highlightSceneCard(index);
 }
 
-function drawScene(scene) {
+function drawScene(scene, elapsed = 0, durationMs = 8000) {
   const canvas = document.getElementById('video-canvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
 
-  // Clear background with theme-based gradients based on scene ID
+  // 1. Compute transitions fade alpha
+  let alpha = 1;
+  if (isPlaying) {
+    // Fade in first 500ms
+    if (elapsed < 500) {
+      alpha = elapsed / 500;
+    }
+    // Fade out last 500ms
+    else if (durationMs - elapsed < 500) {
+      alpha = Math.max(0, (durationMs - elapsed) / 500);
+    }
+  }
+
+  // 2. Clear background with theme-based gradients based on scene ID
   const grad = ctx.createLinearGradient(0, 0, w, h);
   if (scene.id % 4 === 1) {
-    grad.addColorStop(0, '#1e1b4b'); // indigo
-    grad.addColorStop(1, '#311042');
+    grad.addColorStop(0, '#1e1b4b'); // indigo-dark
+    grad.addColorStop(1, '#311042'); // purple-dark
   } else if (scene.id % 4 === 2) {
-    grad.addColorStop(0, '#0f172a'); // slate
-    grad.addColorStop(1, '#1e293b');
+    grad.addColorStop(0, '#0f172a'); // slate-dark
+    grad.addColorStop(1, '#1e293b'); // blue-dark
   } else if (scene.id % 4 === 3) {
-    grad.addColorStop(0, '#022c22'); // emerald
-    grad.addColorStop(1, '#064e3b');
+    grad.addColorStop(0, '#022c22'); // emerald-dark
+    grad.addColorStop(1, '#064e3b'); // teal-dark
   } else {
     grad.addColorStop(0, '#450a0a'); // red-dark
-    grad.addColorStop(1, '#581c87');
+    grad.addColorStop(1, '#581c87'); // deep-purple
   }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // Draw some abstract floating geometry layers representing the prompt visual
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  // 3. Draw Cyber Tech Grid Accent
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < w; i += 40) {
+  for (let i = 0; i < w; i += 50) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
   }
+  for (let i = 0; i < h; i += 50) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
+  }
 
-  // Draw dynamic rotating core shapes
-  const pulseScale = 1 + Math.sin(Date.now() / 300) * 0.04;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+  // 4. Floating particles animation
+  const time = Date.now() / 1000;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+  for (let p = 0; p < 15; p++) {
+    const px = ((p * 73 + time * (10 + p % 5)) % w);
+    const py = ((p * 127 - time * (15 + p % 3)) % h + h) % h;
+    const size = 1.2 + (p % 3) * 0.8;
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 5. Glassmorphism Card in Center
+  const cardW = w - 120;
+  const cardH = h - 150;
+  const cardX = 60;
+  const cardY = 50;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 18;
+  
+  // Card background
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(w/2, h/2, 100 * pulseScale, 0, Math.PI*2);
+  ctx.roundRect(cardX, cardY, cardW, cardH, 12);
   ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
-  ctx.lineWidth = 3;
+  // 6. Icon selection logic based on scene keyword
+  let icon = '💡';
+  const visualLower = scene.visual.toLowerCase();
+  const scriptLower = scene.script.toLowerCase();
+  if (visualLower.includes('biểu đồ') || visualLower.includes('đồ thị') || visualLower.includes('số liệu') || visualLower.includes('analytics')) icon = '📊';
+  else if (visualLower.includes('chào') || visualLower.includes('giới thiệu') || visualLower.includes('tiêu đề') || visualLower.includes('welcome')) icon = '👋';
+  else if (visualLower.includes('giải pháp') || visualLower.includes('chìa khóa') || visualLower.includes('bước') || visualLower.includes('solution')) icon = '🎯';
+  else if (visualLower.includes('đăng ký') || visualLower.includes('like') || visualLower.includes('subscribe') || visualLower.includes('kênh')) icon = '🚀';
+  else if (visualLower.includes('chú ý') || visualLower.includes('cảnh báo') || visualLower.includes('warning') || visualLower.includes('đặc biệt')) icon = '⚠️';
+
+  // Draw glowing icon circle
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.beginPath();
+  ctx.arc(cardX + 60, cardY + cardH / 2, 40, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Glowing border around icon
+  ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Scene visual prompt description (simulated imagery)
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 20px Outfit, sans-serif';
+  // Draw Icon
+  ctx.font = '40px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`CẢNH ${scene.id}: ${scene.bgMusic}`, w / 2, 70);
+  ctx.fillText(icon, cardX + 60, cardY + cardH / 2 + 14);
+  ctx.restore();
 
-  // Prompt summary text in middle
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = 'italic 13px Inter, sans-serif';
-  ctx.fillText(`[Mô tả hình ảnh: ${scene.visual.substring(0, 65)}...]`, w / 2, h / 2 - 20);
+  // 7. Draw Visual & Scene Metadata inside Card
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  
+  // Scene title
+  ctx.fillStyle = '#60a5fa'; // neon blue
+  ctx.font = 'bold 15px Outfit, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`CẢNH ${scene.id} • ${scene.bgMusic.toUpperCase()}`, cardX + 130, cardY + 45);
 
-  // Subtitle
+  // Divider line
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cardX + 130, cardY + 58);
+  ctx.lineTo(cardX + cardW - 30, cardY + 58);
+  ctx.stroke();
+
+  // Draw Prompt details
+  ctx.fillStyle = '#94a3b8'; // gray
+  ctx.font = 'italic 12px Inter, sans-serif';
+  ctx.fillText('Ý tưởng hiển thị cảnh quay:', cardX + 130, cardY + 78);
+
+  ctx.fillStyle = '#f8fafc'; // slate-white
+  ctx.font = 'normal 13px Inter, sans-serif';
+  
+  // Wrap visual description text
+  const visualText = scene.visual;
+  const words = visualText.split(' ');
+  let line = '';
+  let textY = cardY + 98;
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n] + ' ';
+    let metrics = ctx.measureText(testLine);
+    if (metrics.width > cardW - 170 && n > 0) {
+      ctx.fillText(line, cardX + 130, textY);
+      line = words[n] + ' ';
+      textY += 22;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, cardX + 130, textY);
+  ctx.restore();
+
+  // 8. Draw Subtitles Capsule at the bottom
+  const subY = h - 65;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  
+  // Capsule bg
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(40, subY, w - 80, 42, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  // Subtitle text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '500 13px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(scene.script, w / 2, subY + 26);
+  ctx.restore();
+
+  // External subtitle box update
   const subtitleBox = document.getElementById('subtitle-box');
-  subtitleBox.textContent = scene.script;
+  if (subtitleBox) subtitleBox.textContent = scene.script;
 }
 
 function highlightSceneCard(index) {
@@ -585,7 +708,7 @@ function playSceneSequence() {
   }
 
   const scene = storyboard[currentSceneIndex];
-  drawScene(scene);
+  drawScene(scene, 0, durationMs);
   highlightSceneCard(currentSceneIndex);
 
   // TTS Narrator
@@ -600,7 +723,7 @@ function playSceneSequence() {
       clearInterval(animInterval);
       return;
     }
-    drawScene(scene);
+    drawScene(scene, elapsed, durationMs);
     
     // Progress calculation
     const overallProgress = ((currentSceneIndex + (elapsed / durationMs)) / storyboard.length) * 100;
