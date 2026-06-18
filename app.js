@@ -20,6 +20,12 @@ let synthAudioContext = null;
 let synthInterval = null;
 let speechUtterance = null;
 
+// Recording state variables
+let isRecording = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordAudioDest = null;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
@@ -35,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial draw of thumbnail
   drawThumbnail();
+  
+  // Load browser voices list
+  setupVoiceSelector();
 });
 
 // ----------------------------------------------------
@@ -104,8 +113,10 @@ async function fetchData() {
     if (result.data.storyboard && result.data.storyboard.length > 0) {
       renderStoryboard(result.data.storyboard);
       document.getElementById('btn-play-video').disabled = false;
+      document.getElementById('btn-record-video').disabled = false;
     } else {
       document.getElementById('btn-play-video').disabled = true;
+      document.getElementById('btn-record-video').disabled = true;
     }
 
     // YouTube publish panel metadata
@@ -246,6 +257,9 @@ function setupEventListeners() {
 
   // Video play controller
   document.getElementById('btn-play-video').addEventListener('click', toggleVideoPlayer);
+
+  // Video record controller
+  document.getElementById('btn-record-video').addEventListener('click', startRecording);
 
   // Publish YouTube trigger
   document.getElementById('btn-publish-youtube').addEventListener('click', runPublishPipeline);
@@ -602,6 +616,9 @@ function playSceneSequence() {
       playSceneSequence();
     } else {
       // Completed playlist
+      if (isRecording && mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
       pauseVideo();
       currentSceneIndex = 0;
       document.getElementById('player-progress-bar').style.width = `100%`;
@@ -614,6 +631,10 @@ function pauseVideo() {
   isPlaying = false;
   document.getElementById('btn-play-video').innerHTML = '<span class="material-icons-round">play_arrow</span>';
   
+  if (isRecording && mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  
   if (sceneTimeout) clearTimeout(sceneTimeout);
   if (speechUtterance) window.speechSynthesis.cancel();
   stopSynthSound();
@@ -624,10 +645,17 @@ function speakSceneScript(text) {
     window.speechSynthesis.cancel();
     speechUtterance = new SpeechSynthesisUtterance(text);
     
-    // Attempt to set a Vietnamese voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VN'));
-    if (viVoice) speechUtterance.voice = viVoice;
+    const select = document.getElementById('video-voice-select');
+    if (select && select.value) {
+      const voices = window.speechSynthesis.getVoices();
+      const chosen = voices.find(v => v.name === select.value);
+      if (chosen) speechUtterance.voice = chosen;
+    } else {
+      // Fallback to Vietnamese
+      const voices = window.speechSynthesis.getVoices();
+      const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VN'));
+      if (viVoice) speechUtterance.voice = viVoice;
+    }
 
     speechUtterance.rate = 1.0;
     window.speechSynthesis.speak(speechUtterance);
@@ -642,6 +670,10 @@ function initSynthSound() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     synthAudioContext = new AudioContextClass();
     
+    if (isRecording) {
+      recordAudioDest = synthAudioContext.createMediaStreamDestination();
+    }
+    
     // Play a gentle chord loop sequence
     let step = 0;
     const notes = [261.63, 329.63, 392.00, 523.25]; // C chord tones
@@ -654,6 +686,9 @@ function initSynthSound() {
       
       osc.connect(gain);
       gain.connect(synthAudioContext.destination);
+      if (isRecording && recordAudioDest) {
+        gain.connect(recordAudioDest);
+      }
       
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(notes[step % notes.length], synthAudioContext.currentTime);
@@ -851,4 +886,120 @@ function formatBytes(bytes, decimals = 2) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function setupVoiceSelector() {
+  if (typeof speechSynthesis === 'undefined') return;
+  
+  const populateVoices = () => {
+    const voices = speechSynthesis.getVoices();
+    const select = document.getElementById('video-voice-select');
+    if (!select) return;
+    
+    const prevSelected = select.value;
+    select.innerHTML = '';
+    
+    // Sort Vietnamese (vi) voices first
+    const sorted = [...voices].sort((a, b) => {
+      const aVi = a.lang.includes('vi') || a.lang.includes('VN');
+      const bVi = b.lang.includes('vi') || b.lang.includes('VN');
+      if (aVi && !bVi) return -1;
+      if (!aVi && bVi) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    sorted.forEach(voice => {
+      const opt = document.createElement('option');
+      opt.value = voice.name;
+      opt.textContent = `${voice.name} (${voice.lang})`;
+      if (voice.name === prevSelected) {
+        opt.selected = true;
+      } else if (!prevSelected && (voice.lang.includes('vi') || voice.lang.includes('VN'))) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+  };
+
+  populateVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = populateVoices;
+  }
+}
+
+function startRecording() {
+  const canvas = document.getElementById('video-canvas');
+  if (!canvas) return;
+  
+  recordedChunks = [];
+  isRecording = true;
+  
+  // Capture canvas stream (30 fps)
+  const canvasStream = canvas.captureStream(30);
+  
+  // Reset sequence index
+  currentSceneIndex = 0;
+  
+  isPlaying = true;
+  document.getElementById('btn-play-video').innerHTML = '<span class="material-icons-round">pause</span>';
+  document.getElementById('btn-record-video').innerHTML = '<span class="material-icons-round">fiber_manual_record</span> Đang Ghi...';
+  document.getElementById('btn-record-video').disabled = true;
+  document.getElementById('btn-play-video').disabled = true;
+  
+  // Start synthesis sound
+  initSynthSound();
+  
+  // Combine canvas and audio stream if recordAudioDest is initialized
+  let combinedStream = canvasStream;
+  if (recordAudioDest && recordAudioDest.stream) {
+    const audioTrack = recordAudioDest.stream.getAudioTracks()[0];
+    if (audioTrack) {
+      combinedStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        audioTrack
+      ]);
+    }
+  }
+  
+  // WebM codecs
+  let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    options = { mimeType: 'video/webm;codecs=vp8,opus' };
+  }
+  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    options = { mimeType: 'video/webm' };
+  }
+  
+  try {
+    mediaRecorder = new MediaRecorder(combinedStream, options);
+    mediaRecorder.ondataavailable = e => {
+      if (e.data && e.data.size > 0) {
+        recordedChunks.push(e.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'video-ai-agent.webm';
+      a.click();
+      
+      isRecording = false;
+      document.getElementById('btn-record-video').innerHTML = '<span class="material-icons-round">videocam</span> Ghi & Tải Video (WebM)';
+      document.getElementById('btn-record-video').disabled = false;
+      document.getElementById('btn-play-video').disabled = false;
+    };
+    
+    mediaRecorder.start();
+    
+    // Start playing the scenes
+    playSceneSequence();
+  } catch (err) {
+    console.error('Lỗi khi ghi video:', err);
+    alert('Không thể ghi video trên trình duyệt này: ' + err.message);
+    isRecording = false;
+    pauseVideo();
+  }
 }
