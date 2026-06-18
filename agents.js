@@ -89,13 +89,16 @@ export class IngestionAgent {
 }
 
 // ----------------------------------------------------
-// Unified LLM Requester Helper supporting Gemini, Groq, and OpenRouter
+// Unified LLM Requester Helper supporting Gemini, Groq, OpenRouter, and local Ollama
 // ----------------------------------------------------
 async function callLLM(provider, apiKey, modelName, prompt, logCallback = console.log) {
-  if (!apiKey) throw new Error("Khóa API Key trống!");
-  
   const prov = (provider || 'gemini').toLowerCase().trim();
 
+  // API Key is mandatory for non-local providers
+  if (prov !== 'ollama' && !apiKey) {
+    throw new Error(`Khóa API Key cho nhà cung cấp ${provider.toUpperCase()} trống!`);
+  }
+  
   if (prov === 'gemini') {
     const model = modelName || 'gemini-2.5-flash';
     logCallback(`[LLM Request] Gọi Gemini API với model: ${model}`);
@@ -143,6 +146,26 @@ async function callLLM(provider, apiKey, modelName, prompt, logCallback = consol
       return response.data.choices[0].message.content;
     }
     throw new Error("Không nhận được câu trả lời từ OpenRouter API.");
+  } else if (prov === 'ollama') {
+    const url = 'http://localhost:11434/v1/chat/completions';
+    const model = modelName || 'gemma';
+    logCallback(`[LLM Request] Gọi Local Ollama với model: ${model}`);
+    try {
+      const response = await axios.post(url, {
+        model: model,
+        messages: [{ role: 'user', content: prompt }]
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.data?.choices?.[0]?.message?.content) {
+        return response.data.choices[0].message.content;
+      }
+      throw new Error("Không nhận được câu trả lời từ Ollama.");
+    } catch (e) {
+      throw new Error(`Lỗi kết nối tới Ollama local (${url}). Hãy đảm bảo Ollama đã chạy và model '${model}' đã được tải (lệnh: ollama run ${model}). Chi tiết: ${e.message}`);
+    }
   }
   throw new Error(`Nhà cung cấp API không hợp lệ: ${provider}`);
 }
@@ -161,7 +184,8 @@ export class SummarizerAgent {
   async summarize(rawText) {
     this.log(`[Summarizer Agent] Đang phân tích và tóm tắt tài liệu bằng ${this.provider.toUpperCase()} (${rawText.length} ký tự)...`);
     
-    if (this.apiKey) {
+    // For local Ollama, we don't require apiKey to run
+    if (this.apiKey || this.provider === 'ollama') {
       try {
         const prompt = `Bạn là một AI Agent chuyên tóm tắt tin tức và tài liệu. 
 Hãy phân tích tài liệu sau đây và tóm tắt thành một bản báo cáo ngắn gọn bằng tiếng Việt bao gồm các phần:
@@ -174,7 +198,7 @@ Tài liệu cần tóm tắt:
 ${rawText.slice(0, 15000)}`;
 
         const text = await callLLM(this.provider, this.apiKey, this.modelName, prompt, this.log);
-        this.log(`[Summarizer Agent] Đã tóm tắt thành công bằng ${this.provider.toUpperCase()} API.`);
+        this.log(`[Summarizer Agent] Đã tóm tắt thành công bằng ${this.provider.toUpperCase()}.`);
         return text;
       } catch (error) {
         this.log(`[Summarizer Agent] Lỗi khi gọi ${this.provider.toUpperCase()} API: ${error.message}. Chuyển sang thuật toán dự phòng.`);
@@ -225,7 +249,7 @@ export class CopywriterAgent {
   async writeContent(summary, templateType = 'educational') {
     this.log(`[Copywriter Agent] Đang lên kịch bản video bằng ${this.provider.toUpperCase()} theo mẫu: ${templateType}...`);
     
-    if (this.apiKey) {
+    if (this.apiKey || this.provider === 'ollama') {
       try {
         const prompt = `Bạn là một biên kịch chuyên nghiệp cho các kênh video triệu view.
 Dựa trên bản tóm tắt sau:
@@ -243,7 +267,7 @@ PHẦN 2: KỊCH BẢN VIDEO YOUTUBE CHI TIẾT. Kịch bản video phải chia 
 Kịch bản tối thiểu 4 cảnh.`;
 
         const text = await callLLM(this.provider, this.apiKey, this.modelName, prompt, this.log);
-        this.log(`[Copywriter Agent] Đã viết kịch bản thành công bằng ${this.provider.toUpperCase()} API.`);
+        this.log(`[Copywriter Agent] Đã viết kịch bản thành công bằng ${this.provider.toUpperCase()}.`);
         return text;
       } catch (error) {
         this.log(`[Copywriter Agent] Lỗi khi viết kịch bản bằng ${this.provider.toUpperCase()} API: ${error.message}. Chuyển sang mẫu dự phòng.`);
