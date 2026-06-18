@@ -272,10 +272,37 @@ function setupEventListeners() {
 
   // Modal Settings
   const settingsModal = document.getElementById('modal-settings');
+  
+  // Provider change listener to fill default model
+  document.getElementById('cfg-api-provider').addEventListener('change', (e) => {
+    const prov = e.target.value;
+    const modelInput = document.getElementById('cfg-api-model');
+    if (prov === 'gemini') {
+      modelInput.value = 'gemini-2.5-flash';
+    } else if (prov === 'groq') {
+      modelInput.value = 'llama-3.3-70b-versatile';
+    } else if (prov === 'openrouter') {
+      modelInput.value = 'google/gemini-2.5-flash';
+    } else if (prov === 'ollama') {
+      modelInput.value = 'qwen2.5:1.5b';
+    }
+  });
+
   document.getElementById('btn-open-settings').addEventListener('click', () => {
     // Fill settings modal
-    document.getElementById('cfg-api-provider').value = clientState.settings.apiProvider || 'gemini';
-    document.getElementById('cfg-api-model').value = clientState.settings.apiModel || '';
+    const provider = clientState.settings.apiProvider || 'gemini';
+    document.getElementById('cfg-api-provider').value = provider;
+    
+    // Default model if blank
+    let model = clientState.settings.apiModel || '';
+    if (!model) {
+      if (provider === 'gemini') model = 'gemini-2.5-flash';
+      else if (provider === 'groq') model = 'llama-3.3-70b-versatile';
+      else if (provider === 'openrouter') model = 'google/gemini-2.5-flash';
+      else if (provider === 'ollama') model = 'qwen2.5:1.5b';
+    }
+    document.getElementById('cfg-api-model').value = model;
+    
     document.getElementById('cfg-api-key').value = clientState.settings.apiKey || clientState.settings.geminiApiKey || localStorage.getItem('gemini_api_key') || '';
     document.getElementById('cfg-rss-url').value = clientState.settings.rssFeedUrl || '';
     document.getElementById('cfg-ingest-dir').value = clientState.settings.ingestDirectory || '';
