@@ -264,9 +264,24 @@ body {
   animation: flow-down 1.2s linear infinite;
   display: none;
 }
-.active + .flow-line .flow-pulse {
+.agent-node.active + .flow-line .flow-pulse {
   display: block;
 }
+
+/* Color connecting lines between successful nodes */
+.agent-node.success + .flow-line {
+  background: var(--color-scheduler) !important;
+  box-shadow: 0 0 10px var(--color-scheduler) !important;
+  transition: all 0.5s ease;
+}
+
+/* Specific pulse colors during active states */
+.agent-node[data-agent="ingester"].active + .flow-line .flow-pulse { background: linear-gradient(to bottom, transparent, var(--color-ingest), transparent); }
+.agent-node[data-agent="summarizer"].active + .flow-line .flow-pulse { background: linear-gradient(to bottom, transparent, var(--color-summary), transparent); }
+.agent-node[data-agent="writer"].active + .flow-line .flow-pulse { background: linear-gradient(to bottom, transparent, var(--color-write), transparent); }
+.agent-node[data-agent="director"].active + .flow-line .flow-pulse { background: linear-gradient(to bottom, transparent, var(--color-video), transparent); }
+.agent-node[data-agent="publisher"].active + .flow-line .flow-pulse { background: linear-gradient(to bottom, transparent, var(--color-publish), transparent); }
+
 
 @keyframes flow-down {
   0% { top: -10%; }
